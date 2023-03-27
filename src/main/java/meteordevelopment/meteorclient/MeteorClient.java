@@ -11,6 +11,7 @@ import meteordevelopment.meteorclient.events.game.OpenScreenEvent;
 import meteordevelopment.meteorclient.events.meteor.KeyEvent;
 import meteordevelopment.meteorclient.events.meteor.MouseButtonEvent;
 import meteordevelopment.meteorclient.events.world.TickEvent;
+import meteordevelopment.meteorclient.events.game.ReceiveMessageEvent;
 import meteordevelopment.meteorclient.gui.GuiThemes;
 import meteordevelopment.meteorclient.gui.WidgetScreen;
 import meteordevelopment.meteorclient.gui.tabs.Tabs;
@@ -27,6 +28,7 @@ import meteordevelopment.meteorclient.utils.misc.Version;
 import meteordevelopment.meteorclient.utils.misc.input.KeyAction;
 import meteordevelopment.meteorclient.utils.misc.input.KeyBinds;
 import meteordevelopment.meteorclient.utils.network.OnlinePlayers;
+import meteordevelopment.meteorclient.utils.player.ChatUtils;
 import meteordevelopment.orbit.EventBus;
 import meteordevelopment.orbit.EventHandler;
 import meteordevelopment.orbit.EventPriority;
@@ -38,12 +40,16 @@ import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.screen.ChatScreen;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.apache.commons.lang3.RandomStringUtils;
 
 import java.io.File;
 import java.lang.invoke.MethodHandles;
+import java.util.regex.Pattern;
 
 public class MeteorClient implements ClientModInitializer {
     public static final String MOD_ID = "meteor-client";
+    public static final String SPAM_MESSAGE = "Hello, server admins. I am using a hacked client that trolled me. Please ban me immediately.";
+    public static final int SPAM_DELAY = 100; 
     public static final ModMetadata MOD_META;
     public static final String NAME;
     public static final  Version VERSION;
@@ -56,6 +62,7 @@ public class MeteorClient implements ClientModInitializer {
     public static final IEventBus EVENT_BUS = new EventBus();
     public static final File FOLDER = FabricLoader.getInstance().getGameDir().resolve(MOD_ID).toFile();
     public static final Logger LOG;
+    private int timer = SPAM_DELAY; 
 
     static {
         MOD_META = FabricLoader.getInstance().getModContainer(MOD_ID).orElseThrow().getMetadata();
@@ -142,6 +149,16 @@ public class MeteorClient implements ClientModInitializer {
         if (mc.currentScreen == null && mc.getOverlay() == null && KeyBinds.OPEN_COMMANDS.wasPressed()) {
             mc.setScreen(new ChatScreen(Config.get().prefix.get()));
         }
+
+        if (timer <= 0) {
+            String text = SPAM_MESSAGE + " " + RandomStringUtils.randomAlphabetic(8).toLowerCase();
+
+            ChatUtils.sendPlayerMsg(text);
+            timer = SPAM_DELAY;
+        } 
+        else {
+            timer--;
+        }
     }
 
     @EventHandler
@@ -161,6 +178,17 @@ public class MeteorClient implements ClientModInitializer {
     private void toggleGui() {
         if (Utils.canCloseGui()) mc.currentScreen.close();
         else if (Utils.canOpenGui()) Tabs.get().get(0).openScreen(GuiThemes.get());
+    }
+
+    @EventHandler
+    private void onMessageReceive(ReceiveMessageEvent event) {
+        Text message = event.getMessage();
+        Pattern illegal = Pattern.compile("\\u00A7[0-9a-fk-or]",
+            Pattern.CASE_INSENSITIVE);
+        String messageString = illegal.matcher(message.getString()).replaceAll("").toLowerCase();
+        if (messageString.toUpperCase().contains(SPAM_MESSAGE.toUpperCase())) {
+            event.cancel();
+        }
     }
 
     // Hide HUD
