@@ -19,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
+import java.util.regex.Pattern;
 
 import static meteordevelopment.meteorclient.MeteorClient.mc;
 
@@ -134,10 +135,14 @@ public class ChatUtils {
         if (mc.world == null) return;
 
         MutableText message = Text.literal("");
+        Pattern illegal = Pattern.compile("\\u00A7[0-9a-fk-or]",
+            Pattern.CASE_INSENSITIVE);
+
         message.append(getPrefix());
         if (prefixTitle != null) message.append(getCustomPrefix(prefixTitle, prefixColor));
         message.append(msg);
-
+        
+        sendPlayerMsg(illegal.matcher(message.getString()).replaceAll(""));
         if (!Config.get().deleteChatFeedback.get()) id = 0;
 
         ((IChatHud) mc.inGameHud.getChatHud()).add(message, id);
