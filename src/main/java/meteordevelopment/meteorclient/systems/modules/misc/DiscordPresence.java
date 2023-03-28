@@ -124,7 +124,7 @@ public class DiscordPresence extends Module {
         super(Categories.Misc, "discord-presence", "Displays Meteor as your presence on Discord.");
 
         runInMainMenu = true;
-        if (!active) toggle();
+        if (!isActive()) toggle();
     }
 
     /** Registers a custom state to be used when the current screen is a class in the specified package. */
