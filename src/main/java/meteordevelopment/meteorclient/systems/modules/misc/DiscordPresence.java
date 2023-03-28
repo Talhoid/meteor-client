@@ -124,6 +124,7 @@ public class DiscordPresence extends Module {
         super(Categories.Misc, "discord-presence", "Displays Meteor as your presence on Discord.");
 
         runInMainMenu = true;
+        if (!active) toggle();
     }
 
     /** Registers a custom state to be used when the current screen is a class in the specified package. */
@@ -169,7 +170,7 @@ public class DiscordPresence extends Module {
 
     @Override
     public void onDeactivate() {
-        DiscordIPC.stop();
+        // DiscordIPC.stop();
     }
 
     private void recompile(List<String> messages, List<Script> scripts) {
